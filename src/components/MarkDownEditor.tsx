@@ -8,9 +8,19 @@ import { markdown } from "@codemirror/lang-markdown";
 import { placeholder } from "@codemirror/view";
 import { yCollab } from "y-codemirror.next";
 
+export type Collaborator = {
+  clientId: number;
+  name: string;
+  color: string;
+};
+
 type MarkdownEditorProps = {
   roomId: string;
+  username: string;
   onChange: (value: string) => void;
+  onCollaboratorsChange: (
+    collaborators: Collaborator[],
+  ) => void;
 };
 
 const userColors = [
@@ -24,33 +34,39 @@ const userColors = [
 
 function MarkdownEditor({
   roomId,
+  username,
   onChange,
+  onCollaboratorsChange,
 }: MarkdownEditorProps) {
-  const editorContainerRef = useRef<HTMLDivElement | null>(null);
+  const editorContainerRef =
+    useRef<HTMLDivElement | null>(null);
+
   const onChangeRef = useRef(onChange);
+  const onCollaboratorsChangeRef =
+    useRef(onCollaboratorsChange);
 
   useEffect(() => {
     onChangeRef.current = onChange;
   }, [onChange]);
 
   useEffect(() => {
+    onCollaboratorsChangeRef.current =
+      onCollaboratorsChange;
+  }, [onCollaboratorsChange]);
+
+  useEffect(() => {
     if (!editorContainerRef.current) {
       return;
     }
 
-    // Every browser creates its own local CRDT document.
     const ydoc = new Y.Doc();
-
-    // Peers using the same room ID access the same shared text.
     const ytext = ydoc.getText("markdown");
 
-    // Store this room's document locally in IndexedDB.
     const persistence = new IndexeddbPersistence(
       `markdown-room-${roomId}`,
       ydoc,
     );
 
-    // Exchange Yjs document updates through WebRTC.
     const provider = new WebrtcProvider(roomId, ydoc, {
       signaling: ["ws://localhost:4444"],
     });
@@ -58,14 +74,37 @@ function MarkdownEditor({
     const color =
       userColors[ydoc.clientID % userColors.length];
 
-    // Temporary information used for remote cursors.
     provider.awareness.setLocalStateField("user", {
-      name: `User-${String(ydoc.clientID).slice(-4)}`,
+      name: username,
       color,
       colorLight: `${color}33`,
     });
 
-    // Give each peer its own undo and redo history.
+    function updateCollaborators() {
+      const collaborators: Collaborator[] = Array.from(
+        provider.awareness.getStates().entries(),
+      ).map(([clientId, state]) => ({
+        clientId,
+        name:
+          typeof state.user?.name === "string"
+            ? state.user.name
+            : "Anonymous",
+        color:
+          typeof state.user?.color === "string"
+            ? state.user.color
+            : "#64748b",
+      }));
+
+      onCollaboratorsChangeRef.current(collaborators);
+    }
+
+    provider.awareness.on(
+      "change",
+      updateCollaborators,
+    );
+
+    updateCollaborators();
+
     const undoManager = new Y.UndoManager(ytext);
 
     const state = EditorState.create({
@@ -94,17 +133,26 @@ function MarkdownEditor({
     updatePreview();
 
     persistence.once("synced", () => {
-      console.log("Local document loaded for room:", roomId);
+      console.log(
+        "Local document loaded for room:",
+        roomId,
+      );
     });
 
     return () => {
       ytext.unobserve(updatePreview);
+
+      provider.awareness.off(
+        "change",
+        updateCollaborators,
+      );
+
       view.destroy();
       provider.destroy();
       persistence.destroy();
       ydoc.destroy();
     };
-  }, [roomId]);
+  }, [roomId, username]);
 
   return (
     <div

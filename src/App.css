@@ -298,3 +298,59 @@
 .editor-container .cm-focused {
   outline: none;
 }
+
+.input-label {
+  display: block;
+  margin-bottom: 8px;
+  color: #334155;
+  text-align: left;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.username-input {
+  width: 100%;
+  margin-bottom: 18px;
+  padding: 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  color: #0f172a;
+  background: white;
+}
+
+.username-input:focus,
+.join-form input:focus {
+  border-color: #2563eb;
+  outline: 2px solid rgb(37 99 235 / 15%);
+}
+
+.form-error {
+  margin: -8px 0 14px !important;
+  color: #dc2626 !important;
+  text-align: left;
+  font-size: 14px;
+}
+
+.collaborator-list {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.collaborator-chip {
+  padding: 6px 10px;
+  border: 1px solid #64748b;
+  border-radius: 18px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: white;
+  font-size: 13px;
+}
+
+.collaborator-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+}
