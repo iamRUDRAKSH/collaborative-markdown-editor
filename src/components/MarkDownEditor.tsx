@@ -1,80 +1,117 @@
 import { useEffect, useRef } from "react";
+import * as Y from "yjs";
+import { WebrtcProvider } from "y-webrtc";
+import { IndexeddbPersistence } from "y-indexeddb";
 import { EditorState } from "@codemirror/state";
 import { EditorView, basicSetup } from "codemirror";
 import { markdown } from "@codemirror/lang-markdown";
+import { placeholder } from "@codemirror/view";
+import { yCollab } from "y-codemirror.next";
 
 type MarkdownEditorProps = {
-    value: string;
-    onChange: (value: string) => void;
+  roomId: string;
+  onChange: (value: string) => void;
 };
 
-function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
-    const editorContainerRef = useRef<HTMLDivElement | null>(null);
-    const editorViewRef = useRef<EditorView | null>(null);
-    const onChangeRef = useRef(onChange);
-    const initialValueRef = useRef(value);
+const userColors = [
+  "#2563eb",
+  "#dc2626",
+  "#16a34a",
+  "#9333ea",
+  "#ea580c",
+  "#0891b2",
+];
 
-    useEffect(() => {
-        onChangeRef.current = onChange;
-    }, [onChange]);
+function MarkdownEditor({
+  roomId,
+  onChange,
+}: MarkdownEditorProps) {
+  const editorContainerRef = useRef<HTMLDivElement | null>(null);
+  const onChangeRef = useRef(onChange);
 
-    useEffect(() => {
-        if (!editorContainerRef.current) {
-            return;
-        }
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
 
-        const state = EditorState.create({
-            doc: initialValueRef.current,
-            extensions: [
-                basicSetup,
-                markdown(),
-                EditorView.lineWrapping,
+  useEffect(() => {
+    if (!editorContainerRef.current) {
+      return;
+    }
 
-                EditorView.updateListener.of((update) => {
-                    if (update.docChanged) {
-                        const updatedMarkdown = update.state.doc.toString();
-                        onChangeRef.current(updatedMarkdown);
-                    }
-                }),
-            ],
-        });
+    // Every browser creates its own local CRDT document.
+    const ydoc = new Y.Doc();
 
-        const view = new EditorView({
-            state,
-            parent: editorContainerRef.current,
-        });
+    // Peers using the same room ID access the same shared text.
+    const ytext = ydoc.getText("markdown");
 
-        editorViewRef.current = view;
+    // Store this room's document locally in IndexedDB.
+    const persistence = new IndexeddbPersistence(
+      `markdown-room-${roomId}`,
+      ydoc,
+    );
 
-        return () => {
-            view.destroy();
-            editorViewRef.current = null;
-        };
-    }, []);
+    // Exchange Yjs document updates through WebRTC.
+    const provider = new WebrtcProvider(roomId, ydoc, {
+      signaling: ["ws://localhost:4444"],
+    });
 
-    useEffect(() => {
-        const view = editorViewRef.current;
+    const color =
+      userColors[ydoc.clientID % userColors.length];
 
-        if (!view) {
-            return;
-        }
+    // Temporary information used for remote cursors.
+    provider.awareness.setLocalStateField("user", {
+      name: `User-${String(ydoc.clientID).slice(-4)}`,
+      color,
+      colorLight: `${color}33`,
+    });
 
-        const currentEditorValue = view.state.doc.toString();
+    // Give each peer its own undo and redo history.
+    const undoManager = new Y.UndoManager(ytext);
 
-        if (currentEditorValue === value) {
-            return;
-        }
+    const state = EditorState.create({
+      doc: ytext.toString(),
+      extensions: [
+        basicSetup,
+        markdown(),
+        EditorView.lineWrapping,
+        placeholder("Start writing Markdown here..."),
+        yCollab(ytext, provider.awareness, {
+          undoManager,
+        }),
+      ],
+    });
 
-        view.dispatch({
-            changes: {
-                from: 0,
-                to: currentEditorValue.length,
-                insert: value,
-            },
-        });
-    }, [value]);
+    const view = new EditorView({
+      state,
+      parent: editorContainerRef.current,
+    });
 
-    return <div className="editor-container" ref={editorContainerRef} />;
+    function updatePreview() {
+      onChangeRef.current(ytext.toString());
+    }
+
+    ytext.observe(updatePreview);
+    updatePreview();
+
+    persistence.once("synced", () => {
+      console.log("Local document loaded for room:", roomId);
+    });
+
+    return () => {
+      ytext.unobserve(updatePreview);
+      view.destroy();
+      provider.destroy();
+      persistence.destroy();
+      ydoc.destroy();
+    };
+  }, [roomId]);
+
+  return (
+    <div
+      className="editor-container"
+      ref={editorContainerRef}
+    />
+  );
 }
 
 export default MarkdownEditor;
