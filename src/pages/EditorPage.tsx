@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -14,6 +14,7 @@ function EditorPage() {
     const [collaborators, setCollaborators] = useState<
         Collaborator[]
     >([]);
+    const [documentHash, setDocumentHash] = useState("");
 
     async function copyRoomLink() {
         await navigator.clipboard.writeText(window.location.href);
@@ -25,6 +26,55 @@ function EditorPage() {
         }, 2000);
     }
 
+    function downloadMarkdown() {
+        const file = new Blob([markdown], {
+            type: "text/markdown;charset=utf-8",
+        });
+
+        const downloadUrl = URL.createObjectURL(file);
+        const link = document.createElement("a");
+
+        link.href = downloadUrl;
+        link.download = `document-${roomId ?? "untitled"}.md`;
+
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+
+        URL.revokeObjectURL(downloadUrl);
+    }
+
+    useEffect(() => {
+        let cancelled = false;
+
+        async function calculateDocumentHash() {
+            const encodedDocument = new TextEncoder().encode(
+                markdown,
+            );
+
+            const hashBuffer = await crypto.subtle.digest(
+                "SHA-256",
+                encodedDocument,
+            );
+
+            const hash = Array.from(
+                new Uint8Array(hashBuffer),
+            )
+                .map((byte) => byte.toString(16).padStart(2, "0"))
+                .join("");
+
+            if (!cancelled) {
+                setDocumentHash(hash);
+            }
+        }
+
+        void calculateDocumentHash();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [markdown]);
+
     return (
         <div className="app">
             <header className="header">
@@ -34,6 +84,18 @@ function EditorPage() {
                     <p>
                         Room: <strong>{roomId}</strong>
                     </p>
+                    <div className="document-metrics">
+                        <span>Characters: {markdown.length}</span>
+
+                        <span>
+                            Hash:{" "}
+                            <code title={documentHash}>
+                                {documentHash
+                                    ? documentHash.slice(0, 12)
+                                    : "calculating..."}
+                            </code>
+                        </span>
+                    </div>
                 </div>
 
                 <div className="header-actions">
@@ -66,6 +128,14 @@ function EditorPage() {
                         onClick={copyRoomLink}
                     >
                         {copied ? "Link Copied!" : "Copy Room Link"}
+                    </button>
+
+                    <button
+                        className="header-button download-button"
+                        onClick={downloadMarkdown}
+                        disabled={!markdown}
+                    >
+                        Download Markdown
                     </button>
 
                     <Link className="leave-link" to="/">

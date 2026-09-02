@@ -354,3 +354,32 @@
   height: 9px;
   border-radius: 50%;
 }
+
+.download-button {
+  background: #16a34a;
+}
+
+.download-button:hover {
+  background: #15803d;
+}
+
+.header-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.document-metrics {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  color: #cbd5e1;
+  font-size: 13px;
+}
+
+.document-metrics code {
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: #334155;
+  color: #f8fafc;
+}
