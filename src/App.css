@@ -264,3 +264,37 @@
     flex-direction: column;
   }
 }
+
+.editor-container {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  background: white;
+}
+
+.editor-container .cm-editor {
+  height: 100%;
+  color: #1f2937;
+  background: white;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 15px;
+}
+
+.editor-container .cm-scroller {
+  overflow: auto;
+}
+
+.editor-container .cm-content {
+  padding: 20px;
+  line-height: 1.7;
+}
+
+.editor-container .cm-gutters {
+  border-right: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: #94a3b8;
+}
+
+.editor-container .cm-focused {
+  outline: none;
+}
