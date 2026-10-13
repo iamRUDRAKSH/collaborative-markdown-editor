@@ -1,0 +1,19 @@
+# Serverless signaling deployment (Unit IV: Serverless Architectures, Cloudflare).
+#
+#   npx wrangler deploy
+#
+# Then point the frontend at it:
+#   VITE_SIGNALING_URL=wss://<your-worker>.workers.dev
+
+name = "ds-signaling"
+main = "src/worker.ts"
+compatibility_date = "2026-01-01"
+
+[[durable_objects.bindings]]
+name = "SIGNALING_ROOM"
+class_name = "SignalingRoom"
+
+# Durable Objects need a migration declaring the class the first time it is deployed.
+[[migrations]]
+tag = "v1"
+new_classes = ["SignalingRoom"]

@@ -1,0 +1,81 @@
+# Kubernetes deployment for the signaling tier.
+#
+# Unit IV: Kubernetes case study.
+#
+# What this demonstrates beyond "it runs in a cluster":
+#
+#   replicas: 2        the signaling tier stops being a single point of failure, which was
+#                      the weakness FA-1's architecture had and could not fix
+#   probes             the cluster runs its own failure detector over the pods, mirroring
+#                      the beacon protocol the application runs over its peers
+#   Service            a stable name in front of changing pod addresses -- the naming and
+#                      location transparency from Unit I, provided by the platform
+#
+# Honest limitation to state in the report: the y-webrtc relay keeps its subscriber table
+# in memory, so two replicas do not share topics. Two peers load-balanced onto different
+# pods would never discover each other. Making this genuinely horizontal needs either
+# session affinity or a shared pub/sub backplane -- which is exactly the argument for the
+# Durable Object version in deploy/cloudflare, where the platform provides the
+# serialisation point.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ds-signaling
+  labels:
+    app: ds-signaling
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ds-signaling
+  template:
+    metadata:
+      labels:
+        app: ds-signaling
+    spec:
+      containers:
+        - name: signaling
+          image: ds-signaling:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 4444
+              name: ws
+          env:
+            - name: PORT
+              value: "4444"
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 250m
+              memory: 128Mi
+          # The relay answers plain HTTP with 200 "okay", so the probes need no extra route.
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 4444
+            initialDelaySeconds: 2
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 4444
+            initialDelaySeconds: 10
+            periodSeconds: 15
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ds-signaling
+spec:
+  type: ClusterIP
+  selector:
+    app: ds-signaling
+  ports:
+    - port: 80
+      targetPort: 4444
+      name: ws
+  # Pin a peer to one pod for the life of its connection. Without this the in-memory
+  # topic table in each replica would split the room across pods.
+  sessionAffinity: ClientIP
