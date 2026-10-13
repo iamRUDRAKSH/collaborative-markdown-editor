@@ -383,3 +383,380 @@
   background: #334155;
   color: #f8fafc;
 }
+/* ------------------------------------------------------------------ FA-2 ---
+   Distributed systems inspector. Shares the slate palette used above.
+   -------------------------------------------------------------------------- */
+
+.workspace-compact {
+  height: 52vh;
+}
+
+.blocked-banner {
+  margin: 0;
+  padding: 10px 32px;
+  background: #fef3c7;
+  color: #92400e;
+  border-bottom: 1px solid #fcd34d;
+  font-size: 14px;
+}
+
+.inspector {
+  margin: 0 20px 24px;
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.inspector-header {
+  padding: 14px 18px;
+  background: #0f172a;
+  color: white;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.inspector-header h2 {
+  margin: 0;
+  font-size: 17px;
+}
+
+.inspector-subtitle {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.inspector-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.tab {
+  padding: 6px 12px;
+  border: 1px solid #334155;
+  border-radius: 6px;
+  background: #1e293b;
+  color: #cbd5e1;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.tab:hover {
+  background: #334155;
+}
+
+.tab-active {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: white;
+}
+
+.inspector-body {
+  padding: 18px;
+  max-height: 46vh;
+  overflow: auto;
+}
+
+.tab-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.tab-panel h3 {
+  margin: 6px 0 0;
+  font-size: 14px;
+  color: #334155;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.stat-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.stat {
+  min-width: 120px;
+  padding: 10px 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.stat-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #64748b;
+}
+
+.stat-value {
+  font-size: 18px;
+  font-weight: 600;
+  color: #0f172a;
+  font-variant-numeric: tabular-nums;
+}
+
+.control-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.control-row label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #334155;
+}
+
+.control-row select {
+  padding: 6px 8px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.action-button {
+  padding: 6px 12px;
+  border: 1px solid #2563eb;
+  border-radius: 6px;
+  background: #2563eb;
+  color: white;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.action-button:hover:not(:disabled) {
+  background: #1d4ed8;
+}
+
+.action-button:disabled {
+  background: #cbd5e1;
+  border-color: #cbd5e1;
+  cursor: not-allowed;
+}
+
+.hint {
+  margin: 0;
+  font-size: 12.5px;
+  color: #64748b;
+  line-height: 1.5;
+}
+
+.error-line {
+  margin: 0;
+  padding: 8px 10px;
+  background: #fee2e2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  color: #991b1b;
+  font-size: 13px;
+}
+
+.mono-line,
+.mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  color: #475569;
+}
+
+.mono-line {
+  margin: 0;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.data-table th,
+.data-table td {
+  padding: 7px 10px;
+  border-bottom: 1px solid #e2e8f0;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.data-table th {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #64748b;
+  background: #f8fafc;
+}
+
+.data-table td {
+  font-variant-numeric: tabular-nums;
+}
+
+.data-table.compact th,
+.data-table.compact td {
+  padding: 4px 8px;
+}
+
+.self-row {
+  background: #eff6ff;
+}
+
+.section-id {
+  margin-left: 8px;
+  font-size: 11px;
+  color: #94a3b8;
+  background: #f1f5f9;
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+.badge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 2px 7px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.badge-coord {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.badge-ok {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.badge-warn {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.snapshot-card {
+  padding: 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #f8fafc;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.snapshot-card header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.edge-list {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 13px;
+  color: #334155;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.video-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.video-tile {
+  margin: 0;
+  width: 220px;
+}
+
+.video-tile video {
+  width: 100%;
+  border-radius: 8px;
+  background: #0f172a;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+}
+
+.video-tile figcaption {
+  margin-top: 4px;
+  font-size: 12px;
+  color: #64748b;
+  text-align: center;
+}
+
+.event-log {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+}
+
+.event-log li {
+  display: grid;
+  grid-template-columns: 52px 86px 1fr;
+  gap: 8px;
+  padding: 3px 6px;
+  border-radius: 4px;
+  align-items: baseline;
+}
+
+.log-lamport {
+  color: #94a3b8;
+}
+
+.log-source {
+  color: #2563eb;
+}
+
+.log-text {
+  color: #334155;
+  word-break: break-word;
+}
+
+.log-warn {
+  background: #fffbeb;
+}
+
+.log-warn .log-text {
+  color: #92400e;
+}
+
+.log-success .log-text {
+  color: #15803d;
+}
+
+@media (max-width: 900px) {
+  .workspace,
+  .workspace-compact {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+
+  .inspector-body {
+    max-height: none;
+  }
+}

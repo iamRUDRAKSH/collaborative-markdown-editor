@@ -6,12 +6,21 @@ import { EditorState } from "@codemirror/state";
 import { EditorView, basicSetup } from "codemirror";
 import { markdown } from "@codemirror/lang-markdown";
 import { placeholder } from "@codemirror/view";
-import { yCollab } from "y-codemirror.next";
+import { yCollab, ySyncAnnotation } from "y-codemirror.next";
+import { readRoomKey, signalingUrl } from "../ds/config";
 
 export type Collaborator = {
     clientId: number;
     name: string;
     color: string;
+};
+
+/** A character range another node holds exclusively, so this node may not edit it. */
+export type LockedRange = {
+    from: number;
+    to: number;
+    holder: number;
+    title: string;
 };
 
 type MarkdownEditorProps = {
@@ -21,6 +30,13 @@ type MarkdownEditorProps = {
     onCollaboratorsChange: (
         collaborators: Collaborator[],
     ) => void;
+    /**
+     * Ranges currently locked by other nodes. A ref rather than a prop value so that lock
+     * changes do not re-run the effect and rebuild the Yjs provider.
+     */
+    lockedRangesRef?: { current: LockedRange[] };
+    /** Called when an edit is rejected because the section is locked elsewhere. */
+    onBlocked?: (range: LockedRange) => void;
 };
 
 const userColors = [
@@ -32,15 +48,13 @@ const userColors = [
     "#0891b2",
 ];
 
-const signalingUrl =
-    import.meta.env.VITE_SIGNALING_URL ??
-    "ws://localhost:4444";
-
 function MarkdownEditor({
     roomId,
     username,
     onChange,
     onCollaboratorsChange,
+    lockedRangesRef,
+    onBlocked,
 }: MarkdownEditorProps) {
     const editorContainerRef =
         useRef<HTMLDivElement | null>(null);
@@ -48,6 +62,11 @@ function MarkdownEditor({
     const onChangeRef = useRef(onChange);
     const onCollaboratorsChangeRef =
         useRef(onCollaboratorsChange);
+    const onBlockedRef = useRef(onBlocked);
+
+    useEffect(() => {
+        onBlockedRef.current = onBlocked;
+    }, [onBlocked]);
 
     useEffect(() => {
         onChangeRef.current = onChange;
@@ -71,8 +90,13 @@ function MarkdownEditor({
             ydoc,
         );
 
+        // When a room key is present the Yjs room is encrypted: peers without the secret
+        // can reach the signaling topic but cannot read any document update.
+        const roomKey = readRoomKey(roomId);
+
         const provider = new WebrtcProvider(roomId, ydoc, {
             signaling: [signalingUrl],
+            ...(roomKey ? { password: roomKey } : {}),
         });
 
         const color =
@@ -111,6 +135,60 @@ function MarkdownEditor({
 
         const undoManager = new Y.UndoManager(ytext);
 
+        /**
+         * Enforcement point for distributed mutual exclusion.
+         *
+         * The CRDT would happily merge an edit into a section another node has locked --
+         * that is precisely what it is designed to do. The lock only means anything if
+         * something refuses the edit, so this filter drops any transaction whose changes
+         * touch a range held elsewhere.
+         *
+         * It guards the local editor only. A node that bypassed this check could still
+         * write to the section, because nothing in a peer-to-peer CRDT can stop it. The
+         * honest claim is that this enforces the lock among cooperating nodes, not against
+         * an adversarial one.
+         */
+        const lockFilter = EditorState.transactionFilter.of((tr) => {
+            if (!tr.docChanged || !lockedRangesRef) {
+                return tr;
+            }
+
+            // Remote CRDT updates carry y-codemirror's sync annotation. They must always
+            // be applied: rejecting one would make this replica diverge permanently, which
+            // is a far worse outcome than letting a locked section receive a remote edit.
+            // The lock is enforced where the edit originates, not where it lands.
+            if (tr.annotation(ySyncAnnotation) !== undefined) {
+                return tr;
+            }
+
+            const ranges = lockedRangesRef.current;
+            if (ranges.length === 0) {
+                return tr;
+            }
+
+            let blocked: LockedRange | null = null;
+
+            tr.changes.iterChangedRanges((fromA, toA) => {
+                if (blocked) {
+                    return;
+                }
+                for (const range of ranges) {
+                    // Overlap test against the locked span, in pre-change coordinates.
+                    if (fromA < range.to && toA > range.from) {
+                        blocked = range;
+                        return;
+                    }
+                }
+            });
+
+            if (blocked) {
+                onBlockedRef.current?.(blocked);
+                return [];
+            }
+
+            return tr;
+        });
+
         const state = EditorState.create({
             doc: ytext.toString(),
             extensions: [
@@ -118,6 +196,7 @@ function MarkdownEditor({
                 markdown(),
                 EditorView.lineWrapping,
                 placeholder("Start writing Markdown here..."),
+                lockFilter,
                 yCollab(ytext, provider.awareness, {
                     undoManager,
                 }),
@@ -156,7 +235,9 @@ function MarkdownEditor({
             persistence.destroy();
             ydoc.destroy();
         };
-    }, [roomId, username]);
+        // lockedRangesRef is a stable ref object, so listing it never re-runs the effect
+        // and never rebuilds the Yjs provider; it is here only to satisfy the lint rule.
+    }, [roomId, username, lockedRangesRef]);
 
     return (
         <div

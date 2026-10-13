@@ -1,10 +1,12 @@
 import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
+import { readUserName, writeUserName } from "../ds/config";
 
 function HomePage() {
-  const [username, setUsername] = useState(
-    localStorage.getItem("markdown-username") ?? "",
-  );
+  const [username, setUsername] = useState(() => {
+    const stored = readUserName();
+    return stored === "Anonymous" ? "" : stored;
+  });
   const [roomId, setRoomId] = useState("");
   const [error, setError] = useState("");
 
@@ -18,10 +20,8 @@ function HomePage() {
       return false;
     }
 
-    localStorage.setItem(
-      "markdown-username",
-      cleanedUsername,
-    );
+    // Stored per tab as well as per browser, so two tabs can be two distinct nodes.
+    writeUserName(cleanedUsername);
 
     setError("");
     return true;
