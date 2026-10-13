@@ -1,9 +1,11 @@
 # Serverless signaling deployment (Unit IV: Serverless Architectures, Cloudflare).
 #
+#   cd deploy/cloudflare
+#   npx wrangler login
 #   npx wrangler deploy
 #
-# Then point the frontend at it:
-#   VITE_SIGNALING_URL=wss://<your-worker>.workers.dev
+# Then rebuild the frontend with:
+#   VITE_SIGNALING_URL=wss://ds-signaling.<your-subdomain>.workers.dev
 
 name = "ds-signaling"
 main = "src/worker.ts"
@@ -13,7 +15,10 @@ compatibility_date = "2026-01-01"
 name = "SIGNALING_ROOM"
 class_name = "SignalingRoom"
 
-# Durable Objects need a migration declaring the class the first time it is deployed.
+# SQLite-backed Durable Objects are the class available on the Workers free plan.
+# The older key-value backing (`new_classes`) requires a paid Workers plan, so this is
+# `new_sqlite_classes` to keep the deployment free. We keep no durable state anyway --
+# signaling is discovery, not storage, and a peer that reconnects simply re-subscribes.
 [[migrations]]
 tag = "v1"
-new_classes = ["SignalingRoom"]
+new_sqlite_classes = ["SignalingRoom"]
