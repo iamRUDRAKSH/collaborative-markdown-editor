@@ -11,15 +11,28 @@ The document itself is never hosted anywhere. It lives in the browsers; the rela
 carries SDP offers, answers and ICE candidates, and can be switched off once peers are
 connected.
 
-## Order matters
+## The signaling URL
 
-`VITE_SIGNALING_URL` is inlined by Vite at **build time**, not read at runtime. So:
+`src/ds/config.ts` picks the relay from where the page is served:
 
-1. Deploy the signaling relay first.
-2. Set `VITE_SIGNALING_URL` on the frontend to its address.
-3. Rebuild the frontend.
+* a development host (`localhost`, `127.0.0.1`, `*.local`) uses `ws://localhost:4444`
+* anything else uses the deployed relay, `wss://ds-signaling.onrender.com`
 
-Changing the signaling URL later means a **rebuild and redeploy**, not a restart.
+So a build with **no environment variable at all** is correct in both places, and the most
+common deployment failure is gone.
+
+`VITE_SIGNALING_URL` still overrides it when set, which is what you want if you deploy the
+relay somewhere else. That variable is inlined by Vite at **build time**, so setting it
+requires a rebuild, not a restart — and if you point it somewhere wrong, it wins over the
+sensible default.
+
+### Why this is not just hardcoding
+
+The previous fallback was localhost unconditionally. A production build that missed the
+environment variable therefore pointed every visitor at their own machine, and the failure
+was **silent**: the page loaded, the editor worked, and each user sat alone in an empty room
+with no error. Depending on a dashboard checkbox for that is a bad trade. If you move the
+relay, change the constant or set the variable — both are one line.
 
 ## Fastest path: the Blueprint
 
@@ -30,12 +43,11 @@ Changing the signaling URL later means a **rebuild and redeploy**, not a restart
    `ds-editor`.
 3. Wait for `ds-signaling` to go live and copy its URL
    (`https://ds-signaling-xxxx.onrender.com`).
-4. Open `ds-editor` → **Environment** → set:
-   ```
-   VITE_SIGNALING_URL = wss://ds-signaling-xxxx.onrender.com
-   ```
-   Note **`wss://`**, not `https://` and not `ws://`.
-5. Trigger a manual deploy of `ds-editor` so the new value is baked in.
+4. If your relay is at `wss://ds-signaling.onrender.com`, nothing further is needed — that
+   is the built-in default for non-development hosts.
+5. If it is anywhere else, open `ds-editor` → **Environment** → set
+   `VITE_SIGNALING_URL` to `wss://<your-relay>.onrender.com` (note **`wss://`**, not
+   `https://`) and trigger a manual deploy so the value is baked in.
 
 If Render rejects `runtime: static`, your account is on the older Blueprint schema — change
 that key to `env: static` and re-sync. Everything else is identical.

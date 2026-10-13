@@ -6,8 +6,50 @@
  * knowing about the other.
  */
 
-export const signalingUrl: string =
-  import.meta.env.VITE_SIGNALING_URL ?? "ws://localhost:4444";
+/** The deployed relay, used when the page is not served from a development host. */
+const DEPLOYED_SIGNALING_URL = "wss://ds-signaling.onrender.com";
+
+const LOCAL_SIGNALING_URL = "ws://localhost:4444";
+
+/**
+ * Where to reach the signaling relay.
+ *
+ * `VITE_SIGNALING_URL` still wins when it is set, so a different deployment can override
+ * this without touching code. What changed is the fallback: it used to be localhost
+ * unconditionally, which meant a production build that missed the environment variable
+ * pointed every visitor at their own machine. The failure was silent -- the page loaded,
+ * the editor worked, and every user simply sat alone in an empty room with no error. That
+ * is a bad failure mode to depend on a dashboard setting for.
+ *
+ * Now the default is chosen from where the page is actually being served. A development
+ * host gets the local relay; anything else gets the deployed one. A build with no
+ * environment variable at all is therefore still correct in both places.
+ *
+ * Note this is evaluated at module load rather than inlined at build time, so the same
+ * bundle behaves correctly whether it is opened from localhost or from the deployed site.
+ */
+function resolveSignalingUrl(): string {
+  const configured = import.meta.env.VITE_SIGNALING_URL;
+  if (configured) {
+    return configured;
+  }
+
+  if (typeof window === "undefined") {
+    return LOCAL_SIGNALING_URL;
+  }
+
+  const host = window.location.hostname;
+  const isDevelopmentHost =
+    host === "localhost" ||
+    host === "127.0.0.1" ||
+    host === "[::1]" ||
+    host === "::1" ||
+    host.endsWith(".local");
+
+  return isDevelopmentHost ? LOCAL_SIGNALING_URL : DEPLOYED_SIGNALING_URL;
+}
+
+export const signalingUrl: string = resolveSignalingUrl();
 
 /**
  * Per-tab identity.
