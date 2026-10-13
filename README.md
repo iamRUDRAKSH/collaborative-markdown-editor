@@ -259,6 +259,108 @@ Possible FA-2 extensions include:
 * Comments and annotations
 * Distributed leader election or coordination mechanisms
 
+## FA-2: Distributed Coordination (Units 3 and 4)
+
+FA-1 built a system that *deliberately avoids coordination*. A CRDT converges without
+agreement, which is why consensus, mutual exclusion and election had nothing to attach to.
+
+FA-2 adds the features that make coordination unavoidable, then implements the classical
+algorithms that provide it. The driving feature is **exclusive section locks**: a user may
+claim a document section for restructuring, during which nobody else may edit it. A CRDT
+fundamentally cannot express that guarantee, and everything below follows from needing it.
+
+All of it lives in `src/ds/` and is visible at runtime through the **Distributed Systems
+Inspector** below the editor.
+
+### Unit 3: Synchronization
+
+| Concept | Implementation | File |
+| ------- | -------------- | ---- |
+| Logical Clocks, Lamport's Algorithm | Lamport counter stamped on every message; total order with node-id tiebreak | `ds/clocks.ts` |
+| Vector Algorithm | Vector clocks with exact happened-before / concurrent detection | `ds/clocks.ts` |
+| Clock Synchronization | Cristian's algorithm from beacon round trips; Berkeley averaging run by the coordinator | `ds/clocksync.ts` |
+| beacon protocol | Periodic beacons carrying clocks and lock state; doubles as the failure detector | `ds/beacon.ts` |
+| Election Algorithms | Bully and Chang-Roberts ring, switchable at runtime, with measured message counts | `ds/election.ts` |
+| Mutual Exclusion Algorithms | Centralized, Lamport, Ricart-Agrawala, token ring, and a fair variant | `ds/mutex.ts` |
+| Global State | Chandy-Lamport snapshot with markers and recorded channel state | `ds/snapshot.ts` |
+| Knapp's classification (self study) | Edge-chasing deadlock detection (Chandy-Misra-Haas) | `ds/deadlock.ts` |
+
+### Unit 4: Emerging Distributed Paradigms
+
+| Concept | Implementation | File |
+| ------- | -------------- | ---- |
+| Distributed Object-Based Systems | RPC with stubs, request ids, deadlines and at-most-once semantics | `ds/rpc.ts` |
+| Distributed file system | Content-addressed 64 KB chunks, replication factor 2, re-replication on peer loss | `ds/store.ts` |
+| Serverless Architectures | Cloudflare Worker + Durable Object signaling | `deploy/cloudflare/` |
+| Kubernetes (case study) | Dockerfile and manifests for the signaling tier | `deploy/docker/`, `deploy/k8s/` |
+| Blockchain / DLT (self study) | Snapshots hash-chained to their predecessor | `ds/snapshot.ts` |
+| Apache Hadoop (case study) | The chunk store is HDFS in miniature; the comparison is documented in `ds/store.ts` |  |
+
+### Gaps closed from FA-1
+
+| FA-1 gap | FA-2 answer |
+| -------- | ----------- |
+| No RPC anywhere | `ds/rpc.ts`, used by every service |
+| Library owned every `RTCPeerConnection` | We drive our own offer/answer, ICE and data channel in `ds/transport.ts` |
+| No distributed multimedia | Camera and microphone over the same peer connections, with renegotiation |
+| Stream-oriented communication had no QoS | Latency, jitter, loss and bitrate from `getStats()` in `ds/qos.ts` |
+| No TURN relay | `VITE_TURN_*` adds a relay candidate |
+| No security | Optional room key encrypts the Yjs room: `/room/<id>#key=<secret>` |
+| No virtualization | Dockerfile and Kubernetes manifests |
+| Username shared across tabs | Per-tab identity in `sessionStorage` |
+
+### Architecture
+
+Two independent meshes share one signaling relay on different topics:
+
+```mermaid
+flowchart TD
+    A["Peer A"] <-->|"Yjs CRDT updates"| B["Peer B"]
+    A <-->|"coordination messages"| B
+    A -.->|"topic: roomId"| S["Signaling relay"]
+    B -.->|"topic: ds-control-roomId"| S
+```
+
+The Yjs replica is untouched by FA-2: it still converges without coordination. The second
+mesh carries clocks, beacons, elections, lock requests, markers and RPC. Keeping them
+separate means a failure in the coordination layer degrades guarantees without ever
+threatening document convergence.
+
+### Demonstrating each algorithm
+
+Open the room in **two different browsers**, with a different name in each.
+
+1. **Clocks** - *Nodes & Clocks*. Lamport counters advance on every message; vector clocks
+   show per-node components; the measured clock offset is rarely zero, which is the reason
+   the ordering algorithms never use wall-clock time.
+2. **Election** - switch between Bully and Ring, press *Force election*, and compare the
+   message counts. Then close the coordinator's browser: the survivor detects the missing
+   beacons and elects itself.
+3. **Mutual exclusion** - lock a section in one browser and try to type into it in the
+   other; the edit is rejected. Switch algorithms and compare measured messages against the
+   stated bound (3 vs 3(n-1) vs 2(n-1)).
+4. **Global state** - press *Take snapshot* while both peers are typing. The snapshot
+   records each node's state plus the messages in flight, and chains to the previous hash.
+5. **Deadlock** - lock section A here and section B there, then each request the other's.
+   Within a few seconds a probe returns to its initiator and the cycle is reported and
+   broken.
+6. **File store** - upload a file, then close the other browser and download it again: the
+   chunks were replicated, so it still reassembles and passes its integrity check.
+7. **Media and QoS** - start the camera and watch jitter and loss appear, which the
+   reliable data channel never reports.
+
+### Limitations worth stating
+
+* Lock enforcement is cooperative. The filter rejects local edits into a locked section,
+  but nothing in a peer-to-peer CRDT can stop a modified client from writing anyway.
+* The failure detector is unreliable in the formal sense: a slow network is
+  indistinguishable from a crashed peer, so a live coordinator can be wrongly replaced.
+* Token-ring mutual exclusion loses its token when the holder crashes; the lowest live id
+  regenerates it after a timeout, which can briefly admit two holders.
+* Replicas live in browser tabs, so the file store's durability is bounded by how many
+  tabs stay open.
+* The mesh is still O(n^2) and still unsuitable for large groups.
+
 ## Author
 
-Created by [iamRUDRAKSH](https://github.com/iamRUDRAKSH) as a Distributed Systems FA-1 mini project.
+Created by [iamRUDRAKSH](https://github.com/iamRUDRAKSH) as a Distributed Systems mini project (FA-1 and FA-2).
