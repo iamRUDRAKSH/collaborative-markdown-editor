@@ -348,6 +348,7 @@ export class MutexService {
    * group size, which is the cheapest of the five -- paid for with a single point of
    * failure that only exists because an election can replace it.
    */
+  // [DS-U3-MUTEX-CENTRALIZED] Unit III - Mutual Exclusion. Centralized, 3 messages per entry.
   private requestCentral(state: SectionState): void {
     const coordinator = this.hooks.coordinator();
 
@@ -469,6 +470,7 @@ export class MutexService {
    * every other node at a later timestamp (which the replies provide). Releases are
    * broadcast explicitly, which is the extra (n-1) messages over Ricart-Agrawala.
    */
+  // [DS-U3-MUTEX-LAMPORT] Unit III - Mutual Exclusion. Lamport's algorithm, 3(n-1) messages.
   private requestLamport(state: SectionState): void {
     const peers = this.hooks.liveNodes();
 
@@ -527,6 +529,7 @@ export class MutexService {
    * deferred until release. Deferring is what removes the release broadcast and takes the
    * cost from 3(n-1) down to 2(n-1).
    */
+  // [DS-U3-MUTEX-RICART-AGRAWALA] Unit III - Mutual Exclusion. Ricart-Agrawala, 2(n-1) messages.
   private requestRicartAgrawala(state: SectionState): void {
     const peers = this.hooks.liveNodes();
     state.awaiting = new Set(peers);
@@ -542,6 +545,7 @@ export class MutexService {
     this.maybeEnter(state);
   }
 
+  // [DS-U3-MUTEX-FAIR] Unit III self study - Lodha-Kshemkalyani fairness concession rule.
   private releaseRicartAgrawala(state: SectionState): void {
     const deferred = state.deferred.splice(0);
 
@@ -596,6 +600,7 @@ export class MutexService {
    * Token loss is its classic failure mode: if the holder crashes, the token vanishes.
    * We detect that with a timeout and let the lowest live id regenerate it.
    */
+  // [DS-U3-MUTEX-TOKEN-RING] Unit III - Mutual Exclusion. Token ring, one message per hop.
   private requestToken(state: SectionState): void {
     if (state.hasToken) {
       this.enter(state);

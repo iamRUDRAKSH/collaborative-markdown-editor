@@ -36,6 +36,7 @@ export type MeshEvents = {
 };
 
 /** ICE configuration. STUN always; TURN only when the deployment provides credentials. */
+// [DS-U2-WEBRTC-ICE] Unit II - WebRTC. STUN always, TURN relay when credentials are supplied.
 function buildIceServers(): RTCIceServer[] {
   const servers: RTCIceServer[] = [
     { urls: ["stun:stun.l.google.com:19302", "stun:global.stun.twilio.com:3478"] },
@@ -82,6 +83,7 @@ type Connection = {
   ignoreOffer: boolean;
 };
 
+// [DS-U1-ARCHITECTURE] Unit I - Architectures. Hybrid: centralised discovery, decentralised data.
 export class Mesh {
   private readonly selfId: NodeId;
   private readonly selfName: string;
@@ -177,6 +179,7 @@ export class Mesh {
     }
   }
 
+  // [DS-U2-MESSAGE-ORIENTED] Unit II - Message-Oriented Communication. Topic-based publish/subscribe.
   private publish(data: SignalMessage): void {
     this.publishRaw({ type: "publish", topic: this.topic, data });
   }
@@ -188,6 +191,7 @@ export class Mesh {
    * without a rule both would send an offer and the negotiation would collide. The peer
    * with the lower id is defined to be the initiator.
    */
+  // [DS-U2-P2P] Unit II - P2P Messaging. Full mesh; lower id initiates to avoid glare.
   private isInitiatorFor(peer: NodeId): boolean {
     return this.selfId < peer;
   }
@@ -356,6 +360,7 @@ export class Mesh {
    * Start (or restart) negotiation towards a peer. Called from `negotiationneeded`, so it
    * covers both the initial data-channel offer and any later media renegotiation.
    */
+  // [DS-U2-WEBRTC] Unit II - WebRTC. Our own offer/answer, trickle ICE, perfect negotiation.
   private async negotiate(conn: Connection): Promise<void> {
     try {
       conn.makingOffer = true;

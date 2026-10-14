@@ -327,6 +327,7 @@ export class DsNode {
    * Berkeley round, run only by the coordinator. It averages the offsets it has already
    * measured through the beacon exchange and tells each peer how far to move.
    */
+  // [DS-U3-CLOCKSYNC-ROUND] Unit III - Clock Synchronization. Coordinator drives the Berkeley round.
   private runBerkeleyRound(): void {
     if (!this.election.isCoordinator) {
       return;
@@ -411,6 +412,7 @@ export class DsNode {
    * the coordination data channel, so no new signaling path is needed -- adding the track
    * triggers renegotiation over the offer/answer exchange we already own.
    */
+  // [DS-U1-MULTIMEDIA] Unit I - Distributed Multimedia Systems. Camera and mic over the peer connections.
   async startMedia(): Promise<void> {
     if (this.localStream) {
       return;

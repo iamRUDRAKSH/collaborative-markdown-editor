@@ -11,6 +11,7 @@ import type { RpcEndpoint } from "./rpc";
 import type { AdjustableClock } from "./clocksync";
 import type { NodeId } from "./types";
 
+// [DS-U1-MIDDLEWARE] Unit I - Middleware. The layer every coordination service talks through.
 export type ServiceContext = {
   selfId: NodeId;
   selfName: string;

@@ -38,6 +38,7 @@ export type StoreHooks = {
   coordinator: () => NodeId | null;
 };
 
+// [DS-U4-DFS] Unit IV - Distributed File System. Chunked, content-addressed, replicated.
 export class ChunkStore {
   private readonly ctx: ServiceContext;
   private readonly hooks: StoreHooks;
@@ -224,6 +225,7 @@ export class ChunkStore {
    * This is the HDFS behaviour of restoring the replication factor after a DataNode is
    * declared dead, driven here by the beacon failure detector.
    */
+  // [DS-U4-DFS-REREPLICATE] Unit IV - Distributed File System. Re-replication after a node is lost (HDFS behaviour).
   async onPeerDown(peer: NodeId): Promise<void> {
     const live = this.hooks.liveNodes();
     let repaired = 0;

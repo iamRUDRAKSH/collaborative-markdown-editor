@@ -32,6 +32,7 @@ type ClientMessage =
   | { type: "publish"; topic: string; [key: string]: unknown }
   | { type: "ping" };
 
+// [DS-U4-SERVERLESS] Unit IV - Serverless Architectures, Cloudflare Workers + Durable Objects.
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);

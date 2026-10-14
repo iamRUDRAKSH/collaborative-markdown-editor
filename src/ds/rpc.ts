@@ -62,6 +62,7 @@ export type RpcOptions = {
   defaultTimeoutMs?: number;
 };
 
+// [DS-U2-RPC] Unit II - Remote Procedure Call. Stubs, deadlines, at-most-once semantics.
 export class RpcEndpoint {
   private readonly handlers = new Map<string, RpcHandler>();
   private readonly pending = new Map<string, Pending>();
@@ -145,6 +146,7 @@ export class RpcEndpoint {
    * reads like a local method call, which is exactly the illusion RPC exists to create --
    * and exactly the illusion that hides partial failure, so every call still has a deadline.
    */
+  // [DS-U4-DISTRIBUTED-OBJECTS] Unit IV - Distributed Object-Based Systems. Proxy stub for a remote object.
   stub<T extends object>(peer: NodeId, timeoutMs = this.defaultTimeoutMs): T {
     return new Proxy({} as T, {
       get: (_target, property) => {

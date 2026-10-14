@@ -65,6 +65,7 @@ export type BeaconHooks = {
   onRemoteLocks: (peer: NodeId, locks: LockEntry[], coordinator: NodeId | null) => void;
 };
 
+// [DS-U3-BEACON] Unit III - beacon protocol. Periodic liveness beacon, also the failure detector.
 export class BeaconService {
   private readonly ctx: ServiceContext;
   private readonly hooks: BeaconHooks;
@@ -143,6 +144,7 @@ export class BeaconService {
     this.detectFailures();
   }
 
+  // [DS-U2-FAULT-TOLERANCE] Unit II self study - Fault tolerance. Timeout-based failure detection.
   private detectFailures(): void {
     const now = this.ctx.clock.localNow();
     const deadline = BEACON_INTERVAL_MS * BEACON_MISS_LIMIT;

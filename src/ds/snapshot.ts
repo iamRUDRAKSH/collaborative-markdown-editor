@@ -101,6 +101,7 @@ export class SnapshotService {
   }
 
   /** Begin a snapshot. Any node may initiate; several may run concurrently. */
+  // [DS-U3-GLOBAL-STATE] Unit III - Global State. Chandy-Lamport snapshot, initiator side.
   initiate(): string {
     this.sequence += 1;
     const id = `snap-${this.ctx.selfId}-${this.sequence}`;
@@ -183,6 +184,7 @@ export class SnapshotService {
     return false;
   }
 
+  // [DS-U3-GLOBAL-STATE-MARKER] Unit III - Global State. Marker rule, records local and channel state.
   private onMarker(from: NodeId, body: MarkerBody): void {
     let run = this.runs.get(body.snapshotId);
 
@@ -348,6 +350,7 @@ export class SnapshotService {
  * JSON key order is otherwise insertion order and would make identical states hash
  * differently.
  */
+// [DS-U4-LEDGER] Unit IV self study - Blockchain and DLT. Hash-chained, tamper-evident snapshots.
 async function hashSnapshot(
   id: string,
   localStates: Record<NodeId, SnapshotLocalState>,

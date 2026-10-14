@@ -49,6 +49,7 @@ export type CristianResult = {
  * half the asymmetry, which is why the inspector shows the RTT alongside the offset --
  * a large RTT means a correspondingly untrustworthy offset.
  */
+// [DS-U3-CLOCKSYNC-CRISTIAN] Unit III - Clock Synchronization. Cristian's algorithm.
 export function cristian(sample: TimeSample): CristianResult {
   const rttMs = sample.t4 - sample.t1 - (sample.t3 - sample.t2);
   const offsetMs = (sample.t2 - sample.t1 + (sample.t3 - sample.t4)) / 2;
@@ -66,6 +67,7 @@ export function cristian(sample: TimeSample): CristianResult {
  * Averaging is what makes this work without an authoritative clock: no node is assumed
  * correct, the group simply converges on its own mean.
  */
+// [DS-U3-CLOCKSYNC-BERKELEY] Unit III - Clock Synchronization. Berkeley averaging algorithm.
 export function berkeley(
   offsets: { node: NodeId; offsetMs: number }[],
 ): { average: number; adjustments: { node: NodeId; adjustmentMs: number }[] } {

@@ -51,6 +51,7 @@ export type DeadlockHooks = {
   abort: (section: SectionId) => void;
 };
 
+// [DS-U3-DEADLOCK] Unit III self study - Knapp's classification. Edge chasing, Chandy-Misra-Haas.
 export class DeadlockService {
   private readonly ctx: ServiceContext;
   private readonly hooks: DeadlockHooks;
@@ -195,6 +196,7 @@ export class DeadlockService {
     return true;
   }
 
+  // [DS-U3-DEADLOCK-VICTIM] Unit III self study - Deadlock recovery. Victim selection and abort.
   private onDeadlock(probe: ProbeBody): void {
     this.detections += 1;
     this.lastCycle = [...probe.path, this.ctx.selfId];

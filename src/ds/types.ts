@@ -8,6 +8,7 @@
  */
 
 /** Numeric node identity. Numeric so election algorithms have a total order to work with. */
+// [DS-U2-NAMING] Unit II self study - Names, Identifiers, Addresses. Numeric node identifier.
 export type NodeId = number;
 
 /** A vector clock: node id -> number of events observed at that node. */

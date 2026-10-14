@@ -43,6 +43,7 @@ type Sample = { at: number; bytesReceived: number; bytesSent: number };
 const previous = new Map<NodeId, Sample>();
 
 /** Read one QoS sample per peer connection. */
+// [DS-U2-STREAM-ORIENTED] Unit II - Stream-Oriented Communication. Latency, jitter, loss, bitrate.
 export async function collectQos(
   connections: { id: NodeId; pc: RTCPeerConnection }[],
 ): Promise<PeerQos[]> {

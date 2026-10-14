@@ -9,6 +9,7 @@
 #   docker build -f deploy/docker/Dockerfile -t ds-signaling .
 #   docker run -p 4444:4444 ds-signaling
 
+# [DS-U1-VIRTUALIZATION] Unit I self study - Role of Virtualization. Containerised signaling tier.
 FROM node:22-alpine AS build
 WORKDIR /app
 COPY package.json package-lock.json ./

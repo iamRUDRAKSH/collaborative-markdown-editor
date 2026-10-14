@@ -22,6 +22,7 @@ import type { CausalOrder, NodeId, VectorClockState } from "./types";
  * This gives a consistent partial order: if a happened-before b then L(a) < L(b).
  * The converse does not hold, which is the whole reason vector clocks exist.
  */
+// [DS-U3-LAMPORT] Unit III - Logical Clocks, Lamport's Algorithm.
 export class LamportClock {
   private counter = 0;
 
@@ -49,6 +50,7 @@ export class LamportClock {
  * before b if and only if VC(a) <= VC(b) and VC(a) != VC(b). That "if and only if" is
  * what lets us detect genuine concurrency, which a single integer cannot do.
  */
+// [DS-U3-VECTOR] Unit III - Vector Algorithm. One counter per node.
 export class VectorClock {
   private state: VectorClockState;
   private readonly self: NodeId;
@@ -93,6 +95,7 @@ export class VectorClock {
  * other, which is precisely the situation where the CRDT has to merge and where a lock
  * would have been needed if the application cared about the outcome.
  */
+// [DS-U3-VECTOR-COMPARE] Unit III - Vector Algorithm. Exact causality test, detects concurrency.
 export function compareVectorClocks(
   a: VectorClockState,
   b: VectorClockState,
@@ -138,6 +141,7 @@ export function compareVectorClocks(
  * needs a total order, otherwise two nodes requesting the same section at the same
  * logical time could both decide they won.
  */
+// [DS-U3-LAMPORT-TOTALORDER] Unit III - Lamport's Algorithm. Total order, node id breaks ties.
 export function compareLamport(
   aTime: number,
   aNode: NodeId,

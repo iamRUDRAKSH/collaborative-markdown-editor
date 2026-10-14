@@ -91,6 +91,7 @@ export function readUserName(): string {
  * may do, or any protection once the secret is shared. It is confidentiality against an
  * outsider, not access control among insiders.
  */
+// [DS-U1-SECURITY] Unit I - Design Issues, Security. Optional room key encrypts the Yjs room.
 export function readRoomKey(roomId: string): string | null {
   const storageKey = `markdown-roomkey-${roomId}`;
 

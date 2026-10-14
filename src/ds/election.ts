@@ -139,6 +139,7 @@ export class ElectionService {
 
   // ------------------------------------------------------------------- bully
 
+  // [DS-U3-ELECTION-BULLY] Unit III - Election Algorithms. Bully, O(n^2) messages.
   private startBully(): void {
     const higher = this.hooks.liveNodes().filter((id) => id > this.ctx.selfId);
 
@@ -206,6 +207,7 @@ export class ElectionService {
     return ring[(index + 1) % ring.length];
   }
 
+  // [DS-U3-ELECTION-RING] Unit III - Election Algorithms. Chang-Roberts ring, O(n) messages.
   private startRing(): void {
     const successor = this.successorOf(this.ctx.selfId);
 

@@ -17,6 +17,7 @@
 # session affinity or a shared pub/sub backplane -- which is exactly the argument for the
 # Durable Object version in deploy/cloudflare, where the platform provides the
 # serialisation point.
+# [DS-U4-KUBERNETES] Unit IV - Kubernetes case study, and Unit I self study - Virtualization.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
